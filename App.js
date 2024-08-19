@@ -15,30 +15,33 @@ const urlSchema = new mongoose.Schema({
 const urlModel = mongoose.model("Url", urlSchema);
 
 const createShortUrl = async (url) => {
-  //console.log(`url find ${url}`);
   const data = await urlModel.findOne({ original_url: url });
   if (!data) {
-    //console.log("nous y est");
     const lastUrl = await urlModel.findOne().sort("-short_url").exec();
     let shortUrl = lastUrl ? lastUrl.short_url + 1 : 1;
-    //const shortURLCreation = new Url({ original_url: url });
     const shortURLCreation = new urlModel({
       original_url: url,
       short_url: shortUrl,
     });
     try {
       const savedUrl = await shortURLCreation.save();
-      //console.log(savedUrl);
       return savedUrl;
     } catch (err) {
-      //console.log(err);
+      console.log(err);
     }
   } else {
-    //console.log(`url déjà existante n\ ${data}`);
     return data;
   }
+};
 
-  /* await Url.find().distinct("original:url").exec(); */
+const getUrl = async (shortUrl) => {
+  const data = await urlModel.findOne({ short_url: shortUrl });
+  if (!data) {
+    const error = { error: "No short URL found for the given input" };
+    return error;
+  }
+  return data;
 };
 
 exports.createShortUrl = createShortUrl;
+exports.getUrl = getUrl;

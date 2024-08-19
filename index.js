@@ -25,8 +25,6 @@ app.get("/", function (req, res) {
   res.sendFile(process.cwd() + "/views/index.html");
 });
 
-/* const pattern =
-  /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/g; */
 // POST /api/shorturl
 const createShortUrl = require("./App.js").createShortUrl;
 app.post("/api/shorturl", function (req, res) {
@@ -55,9 +53,6 @@ app.post("/api/shorturl", function (req, res) {
         console.log("address: %j family: IPv%s", address, family);
 
         const { short_url, original_url } = await createShortUrl(url);
-
-        // vérifier si il y a un élément déjà existants pour l'url
-        // engregistrer l'url en bdd et récupérer l'id pour le short_url
         res.json({
           original_url: original_url,
           short_url: short_url,
@@ -68,22 +63,25 @@ app.post("/api/shorturl", function (req, res) {
   } catch (error) {
     console.error(`catch : ${error}`);
     res.json({ error: error });
-    /* res.json({ error: "invalid url" });
-    return; */
   }
 });
 
 // GET /api/shorturl
+const getUrl = require("./App.js").getUrl;
+app.get("/api/shorturl/:short_url", async function (req, res) {
+  const shortUrl = Number(req.params.short_url);
 
-app.get("/api/shorturl/:short_url", function (req, res) {
-  const url = Number(req.params.short_url);
-
-  if (!url) {
+  const { original_url } = await getUrl(shortUrl);
+  const { error } = await getUrl(shortUrl);
+  if (!shortUrl) {
     res.json({ error: "invalid short_url" });
     return;
   }
-  res.json({ query_url: url });
-  // récupérer l'url avec le short_url
+  if (error) {
+    res.json({ error: error });
+  } else {
+    res.redirect(original_url);
+  }
 });
 
 app.listen(port, function () {
